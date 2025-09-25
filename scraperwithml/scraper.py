@@ -7,6 +7,8 @@ model_name = "facebook/bart-large-cnn"
 device = 0 if torch.cuda.is_available() else -1
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForSeq2SeqLM.from_pretrained(model_name).to("cuda" if device >= 0 else "cpu")
+model.eval()
+
 summarizer = pipeline("summarization", model=model, tokenizer=tokenizer, device=device)
 
 def safe_summarize_tokens(text, max_length=120, min_length=40, chunk_size_tokens=800):
@@ -21,12 +23,14 @@ def safe_summarize_tokens(text, max_length=120, min_length=40, chunk_size_tokens
         end = min(start + chunk_size_tokens, total_tokens)
         chunk_ids = input_ids[start:end].unsqueeze(0).to(model.device)
         print(f"Summarizing chunk {chunk_num} ({start}-{end}/{total_tokens} tokens)")
-        summary_ids = model.generate(
-            chunk_ids,
-            max_length=max_length,
-            min_length=min_length,
-            do_sample=False
-        )
+        
+        with torch.no_grad():
+            summary_ids = model.generate(
+                chunk_ids,
+                max_length=max_length,
+                min_length=min_length,
+                do_sample=False
+            )
 
         summary_text = tokenizer.decode(summary_ids[0], skip_special_tokens=True)
         summaries.append(summary_text)
@@ -36,7 +40,8 @@ def safe_summarize_tokens(text, max_length=120, min_length=40, chunk_size_tokens
     if len(summaries) > 1:
         combined = " ".join(summaries)
         combined_ids = tokenizer(combined, return_tensors="pt", truncation=True, max_length=1024)["input_ids"].to(model.device)
-        summary_ids = model.generate(combined_ids, max_length=max_length, min_length=min_length, do_sample=False)
+        with torch.no_grad():
+            summary_ids = model.generate(combined_ids, max_length=max_length, min_length=min_length, do_sample=False)
         return tokenizer.decode(summary_ids[0], skip_special_tokens=True)
 
     return summaries[0]
