@@ -15,7 +15,16 @@ aiscrap-env\Scripts\activate
 
 Install required libraries.
 ```
-pip install requests beautifulsoup4 transformers torch
+pip install requests beautifulsoup4 transformers torch nltk
+```
+
+Install sentence tokenizer data:
+```
+python -m nltk.downloader punkt
+```
+and
+```
+python -m nltk.downloader punkt_tab
 ```
 
 Run the script.
