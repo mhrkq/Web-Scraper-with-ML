@@ -15,7 +15,7 @@ aiscrap-env\Scripts\activate
 
 Install required libraries.
 ```
-pip install requests beautifulsoup4 transformers torch nltk
+pip install requests beautifulsoup4 transformers torch nltk trafilatura
 ```
 
 Install sentence tokenizer data:
