@@ -29,10 +29,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - `model.generate()` call moved inside the `torch.no_grad()` context to avoid redundancy and ensure proper inference behaviour when generating summaries for each chunk and for combined chunks.
 
-### Fixed
-
-### Removed
-
 ## 25/09/2025
 
 ### Added
@@ -49,8 +45,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - proper use of `**inputs` within `generate()` call, preventing incorrect input handling during inference.
 
-### Removed
-
 ## 28/09/2025
 
 ### Added
@@ -63,22 +57,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - `torch.no_grad()` changed to `torch.inference_mode()` for more efficient inference by reducing memory usage and computational overhead.
 
-### Fixed
-
-### Removed
-
 ## 29/09/2025
-
-### Added
 
 ### Changed
 
-- `logging` for structured, timestamped info, warning, and error messages throughout the script
+- `logging` for structured, timestamped info, warning, and error messages throughout the script.
 - model loads with appropriate torch_dtype (float16 for GPU, float32 for CPU) to optimize memory usage and performance.
 - batch summarization in `safe_summarize_tokens` encodes and generates summaries for all chunks at once, instead of iterating chunk-by-chunk.
 
-### Fixed
-
-### Removed
-
 ## 30/09/2025
+
+### Added
+
+- SWITCH_THRESHOLD to toggle between batch and chunk-by-chunk summarization. (Batch mode → slower, shorter abstract summaries; Chunk mode → faster, longer detailed summaries)
+
+## 01/10/2025

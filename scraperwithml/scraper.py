@@ -56,16 +56,34 @@ def chunk_text_by_sentence(text, tokenizer, chunk_size_tokens=800):
     log.info(f"Text split into {len(chunks)} chunks.")
     return chunks
 
+SWITCH_THRESHOLD = 5
+
 # SUMMARISATION
 def safe_summarize_tokens(text, max_length=120, min_length=40, chunk_size_tokens=800):
     
     chunks = chunk_text_by_sentence(text, tokenizer, chunk_size_tokens)
-    summaries = []
+    n_chunks = len(chunks)
+    log.info(f"Detected {n_chunks} chunks.")
     
-    log.info(f"Starting batch summarization for {len(chunks)} chunks...")
+    if n_chunks <= SWITCH_THRESHOLD:
+        log.info("Using chunk-by-chunk summarization.") # longer time taken, but shorter summary
+        summaries = []
+        for i, chunk in enumerate(chunks, 1):
+            log.info(f"Summarizing chunk {i}/{n_chunks}...")
+            with torch.inference_mode():
+                ids = model.generate(
+                    **tokenizer(chunk, return_tensors="pt", truncation=True, max_length=1024).to(model.device),
+                    max_length=max_length,
+                    min_length=min_length,
+                    do_sample=False
+                )
+            summaries.append(tokenizer.decode(ids[0], skip_special_tokens=True))
+        return " ".join(summaries)
+
+    log.info("Using batch summarization.") # shorter time taken, but longer summary
     inputs = tokenizer(
-        chunks, 
-        return_tensors="pt", 
+        chunks,
+        return_tensors="pt",
         padding=True,
         truncation=True,
         max_length=1024
@@ -82,29 +100,26 @@ def safe_summarize_tokens(text, max_length=120, min_length=40, chunk_size_tokens
     summaries = [tokenizer.decode(s, skip_special_tokens=True) for s in summary_ids]
     log.info("All chunks summarized. Combining summaries...")
 
-    if len(summaries) > 1:
-        combined = " ".join(summaries)
-        combined_inputs = tokenizer(
-            combined, 
-            return_tensors="pt", 
-            truncation=True, 
-            padding=True,
-            max_length=1024
-        ).to(model.device)
-        
-        with torch.inference_mode():
-            final_ids = model.generate(
-                **combined_inputs,
-                max_length=max_length,
-                min_length=min_length,
-                do_sample=False
-            )
-            
-        final_summary = tokenizer.decode(final_ids[0], skip_special_tokens=True)
-        log.info("Final combined summary generated.")
-        return final_summary
-        
-    return summaries[0]
+    combined = " ".join(summaries)
+    combined_inputs = tokenizer(
+        combined,
+        return_tensors="pt",
+        truncation=True,
+        padding=True,
+        max_length=1024
+    ).to(model.device)
+
+    with torch.inference_mode():
+        final_ids = model.generate(
+            **combined_inputs,
+            max_length=max_length,
+            min_length=min_length,
+            do_sample=False
+        )
+
+    final_summary = tokenizer.decode(final_ids[0], skip_special_tokens=True)
+    log.info("Final combined summary generated.")
+    return final_summary
 
 # TEXT FETCHING & CLEANING
 def fetch_clean_text(url, timeout=15):
