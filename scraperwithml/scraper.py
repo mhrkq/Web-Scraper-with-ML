@@ -16,6 +16,14 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
+try:
+    nltk.data.find("tokenizers/punkt")
+    log.info("NLTK punkt tokenizer found.")
+except LookupError:
+    log.info("NLTK punkt tokenizer not found. Downloading...")
+    nltk.download("punkt")
+    log.info("NLTK punkt tokenizer downloaded successfully.")
+
 # MODEL 
 model_name = "facebook/bart-large-cnn"
 device = 0 if torch.cuda.is_available() else -1
@@ -121,63 +129,60 @@ def safe_summarize_tokens(text, max_length=120, min_length=40, chunk_size_tokens
     log.info("Final combined summary generated.")
     return final_summary
 
-# TEXT FETCHING & CLEANING
-def fetch_clean_text(url, timeout=15):
-    """Download and clean main article text from a URL."""
-
-    downloaded = trafilatura.fetch_url(url)
-    if downloaded:
-        text = trafilatura.extract(downloaded, include_comments=False)
-        if text and len(text.split()) > 100:
-            text = re.sub(r'\s+', ' ', text).strip()
-            log.info("Text successfully extracted with trafilatura.")
-            return text
-
+def fetch_html(url, timeout=15):
+    """Fetch HTML content once."""
     try:
-        response = requests.get(url, timeout=timeout, headers={"User-Agent": "Mozilla/5.0"})
-        response.raise_for_status()
+        resp = requests.get(url, timeout=timeout, headers={"User-Agent": "Mozilla/5.0"})
+        resp.raise_for_status()
+        log.info("HTML fetched successfully.")
+        return resp.text
     except Exception as e:
         log.error(f"Failed to fetch URL: {e}")
         raise RuntimeError(f"Failed to fetch URL: {e}")
 
-    soup = BeautifulSoup(response.text, "html.parser")
+def extract_main_text(html):
+    """Extract article text using trafilatura or fallback to BeautifulSoup."""
+    text = trafilatura.extract(html, include_comments=False)
+    if text and len(text.split()) > 100:
+        log.info("Text successfully extracted with trafilatura.")
+        return re.sub(r"\s+", " ", text).strip()
+
+    soup = BeautifulSoup(html, "html.parser")
     article = soup.find("article") or soup.find("main")
-    
+
     if article:
         paragraphs = [p.get_text(" ", strip=True) for p in article.find_all("p")]
     else:
-        paragraphs = soup.find_all("p")
-        paragraphs = sorted(paragraphs, key=lambda p: len(p.get_text()), reverse=True)
-        paragraphs = [p.get_text(" ", strip=True) for p in paragraphs[:10]]
+        paragraphs = [p.get_text(" ", strip=True) for p in soup.find_all("p")][:10]
 
     text = " ".join(paragraphs)
-    text = re.sub(r'\s+', ' ', text).strip()
+    text = re.sub(r"\s+", " ", text).strip()
 
     log.info("Text successfully extracted with fallback method.")
     return text if text else None
+
+def extract_metadata(html):
+    """Extract title and meta description from the same HTML."""
+    soup = BeautifulSoup(html, "html.parser")
+    title = soup.title.get_text(strip=True) if soup.title else None
+    meta_desc = soup.find("meta", attrs={"name": "description"})
+    description = meta_desc.get("content") if meta_desc else None
+    return title, description
 
 # MAIN FUNCTION
 def scrape_and_summarize(url):
     start_time = time.time()
     
     try:
-        text_to_summarize = fetch_clean_text(url)
+        html = fetch_html(url)
     except Exception as e:
         return {"error": str(e)}
 
+    text_to_summarize = extract_main_text(html)
     if not text_to_summarize:
         return {"error": "No suitable text extracted from page."}
 
-    title, description = None, None
-    try:
-        resp = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
-        soup = BeautifulSoup(resp.text, "html.parser")
-        title = soup.title.get_text(strip=True) if soup.title else None
-        meta_desc = soup.find("meta", attrs={"name": "description"})
-        description = meta_desc.get("content") if meta_desc else None
-    except Exception as e:
-        log.warning(f"Failed to fetch title/description: {e}")
-    
+    title, description = extract_metadata(html)
     summary = safe_summarize_tokens(text_to_summarize)
     elapsed = time.time() - start_time
     minutes = int(elapsed // 60)

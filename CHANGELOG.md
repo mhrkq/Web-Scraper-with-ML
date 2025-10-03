@@ -9,8 +9,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - BART model (facebook/bart-large-cnn) for text summarization from Hugging Face's transformers library.
-- `scrape_and_summarize` function to scrape content from a URL, then summarize it using the BART model.
-- `safe_summarize_tokens` function to break large texts into manageable chunks for summarization based on token size.
+- `scrape_and_summarize` to scrape content from a URL, then summarize it using the BART model.
+- `safe_summarize_tokens` to break large texts into manageable chunks for summarization based on token size.
 
 ### Changed
 
@@ -34,11 +34,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - `nltk` library to tokenize text into sentences for chunking.
-- `chunk_text_by_sentence function` splits input text into smaller chunks based on sentence boundaries, ensuring each chunk stays within token limit for summarization. Text is divided into logical parts, improving summarization performance.
+- `chunk_text_by_sentence` splits input text into smaller chunks based on sentence boundaries, ensuring each chunk stays within token limit for summarization. Text is divided into logical parts, improving summarization performance.
 
 ### Changed
 
-- summarization process in `safe_summarize_tokens` function to use sentence-based chunks instead of arbitrary token-based splits, improving flow and coherence of summarized text.
+- summarization process in `safe_summarize_tokens` to use sentence-based chunks instead of arbitrary token-based splits, improving flow and coherence of summarized text.
 - the way `inputs` were passed to model for summarization. Each chunk now has its own set of inputs, optimizing performance.
 
 ### Fixed
@@ -50,8 +50,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - `trafilatura` library to fetch and clean article text from URLs, a more reliable and efficient method for extracting main content from web pages.
-- `fetch_clean_text` function to download and extract clean text from a URL using trafilatura, falling back to `requests` if the text extraction fails.
-- time tracking in `scrape_and_summarize` function to log time taken for entire process.
+- `fetch_clean_text` to download and extract clean text from a URL using trafilatura, falling back to `requests` if the text extraction fails.
+- time tracking in `scrape_and_summarize` to log time taken for entire process.
 
 ### Changed
 
@@ -69,6 +69,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- SWITCH_THRESHOLD to toggle between batch and chunk-by-chunk summarization. (Batch mode → slower, shorter abstract summaries; Chunk mode → faster, longer detailed summaries)
+- `SWITCH_THRESHOLD` to toggle between batch and chunk-by-chunk summarization. (Batch mode → slower, shorter abstract summaries; Chunk mode → faster, longer detailed summaries)
 
 ## 01/10/2025
+
+### Changed
+
+- replaced `fetch_clean_data()` with `fetch_html()`, `extract_main_text()`, and `extract_metadata()` for clearer separation of responsibilities.
+- reduced redundant page fetches by reusing the same HTML across extraction steps.
+
+## 03/10/2025
