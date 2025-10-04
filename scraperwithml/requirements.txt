@@ -1,0 +1,6 @@
+torch
+transformers
+nltk
+trafilatura
+beautifulsoup4
+requests

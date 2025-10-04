@@ -73,9 +73,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## 01/10/2025
 
+### Added
+
+- NLTK punkt tokenizer check
+
 ### Changed
 
 - replaced `fetch_clean_data()` with `fetch_html()`, `extract_main_text()`, and `extract_metadata()` for clearer separation of responsibilities.
 - reduced redundant page fetches by reusing the same HTML across extraction steps.
 
 ## 03/10/2025
+
+### Changed
+
+- summarizer now safely handles long input texts by enforcing truncation and chunking.
+- CUDA device-side asserts caused by overlong sequences are prevented.
+- batching applied for both chunk-by-chunk and final summary steps.
+- summarization pipeline works reliably on both CPU and GPU.
+
+## 04/10/2025
