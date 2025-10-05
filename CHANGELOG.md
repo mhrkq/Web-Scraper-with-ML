@@ -92,3 +92,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - summarization pipeline works reliably on both CPU and GPU.
 
 ## 04/10/2025
+
+### Added
+
+- in `summarizer.py`, dynamic batching based on GPU availability.
+- automatic retry on CPU if a CUDA OOM or other GPU-related error occurs.
+- re-chunking of combined summaries to prevent CUDA indexing errors on very long inputs.
+
+## 05/10/2025

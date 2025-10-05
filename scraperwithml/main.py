@@ -40,6 +40,8 @@ if __name__ == "__main__":
     # url = "https://energyeducation.ca/encyclopedia/Thermohaline_circulation"
     # url = "https://www.amazon.com/Amazon-Basics-Color-Coded-Dishwasher-Multicolor/dp/B01B3GARVG/ref=s9_acsd_al_ot_c2_x_4_t"
     # url = "https://www.lazada.sg/products/pdp-i301078910-s527100805.html"
-    url = "https://warhammerfantasy.fandom.com/wiki/Skaven"
+    # url = "https://warhammerfantasy.fandom.com/wiki/Skaven"
+    # url = "https://wiki.warframe.com/w/Orokin"
+    url = "https://warframe.fandom.com/wiki/Orokin"
     result = scrape_and_summarize(url)
     print(result)
